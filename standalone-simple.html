@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spinner Wheel - Random Decision Maker</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: transparent;
+            color: #374151;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.125rem;
+            color: #6b7280;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (min-width: 1024px) {
+            .main-content {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .item-manager {
+            width: 100%;
+            max-width: 28rem;
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .item-manager-header {
+            padding: 1.5rem 1.5rem 0;
+            text-align: center;
+        }
+
+        .item-manager-title {
+            font-size: 1.125rem;
+            font-weight: bold;
+        }
+
+        .item-manager-content {
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .add-item-row {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .add-item-input {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+        }
+
+        .add-item-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .add-btn {
+            padding: 0.5rem 0.75rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .add-btn:hover {
+            background: #2563eb;
+        }
+
+        .add-btn:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .items-list {
+            max-height: 15rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .item-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: #f9fafb;
+            border-radius: 0.375rem;
+        }
+
+        .item-text {
+            flex: 1;
+            font-size: 0.875rem;
+        }
+
+        .item-input {
+            flex: 1;
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            height: 2rem;
+        }
+
+        .item-btn {
+            padding: 0.25rem 0.5rem;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 2rem;
+        }
+
+        .item-btn:hover {
+            background: #f3f4f6;
+        }
+
+        .item-btn.delete {
+            color: #dc2626;
+        }
+
+        .item-btn.delete:hover {
+            color: #b91c1c;
+        }
+
+        .empty-message {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            padding: 1rem 0;
+        }
+
+        .item-count {
+            text-align: center;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .spinner-container {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+
+        .wheel-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .wheel-container {
+            position: relative;
+        }
+
+        .wheel {
+            filter: drop-shadow(0 10px 8px rgb(0 0 0 / 0.04)) drop-shadow(0 4px 3px rgb(0 0 0 / 0.1));
+            transition: transform 3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .pointer {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%) translateY(-0.5rem);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-bottom: 30px solid #ef4444;
+            filter: drop-shadow(0 4px 3px rgb(0 0 0 / 0.07));
+        }
+
+        .spin-btn {
+            padding: 0.75rem 2rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #3b82f6, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            transform: scale(1);
+        }
+
+        .spin-btn:hover {
+            background: linear-gradient(to right, #2563eb, #7c3aed);
+            transform: scale(1.05);
+        }
+
+        .spin-btn:active {
+            transform: scale(0.95);
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: scale(1);
+        }
+
+        .result-container {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(to right, #34d399, #3b82f6);
+            color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            animation: resultAppear 0.5s ease-out;
+        }
+
+        @keyframes resultAppear {
+            from {
+                opacity: 0;
+                transform: scale(0);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .result-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+
+        .confetti {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti-piece {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            animation: confettiFall 3s ease-out forwards;
+        }
+
+        @keyframes confettiFall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="spinner-wheel-app"></div>
+
+    <script>
+        // Sound Effects
+        class SoundEffects {
+            constructor() {
+                this.audioContext = null;
+                this.initAudioContext();
+            }
+
+            initAudioContext() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (error) {
+                    console.warn('Web Audio API not supported:', error);
+                }
+            }
+
+            createTone(frequency, duration, type = 'sine') {
+                if (!this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                oscillator.type = type;
+
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.1, this.audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+            }
+
+            playSpinSound() {
+                if (!this.audioContext) return;
+
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, this.audioContext.currentTime + 2.5);
+
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.05, this.audioContext.currentTime + 0.1);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + 2.5);
+
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + 2.5);
+            }
+
+            playSuccessSound() {
+                if (!this.audioContext) return;
+
+                const notes = [523.25, 659.25, 783.99];
+                notes.forEach((frequency, index) => {
+                    setTimeout(() => {
+                        this.createTone(frequency, 0.3, 'sine');
+                    }, index * 150);
+                });
+            }
+
+            playClickSound() {
+                if (!this.audioContext) return;
+                this.createTone(800, 0.1, 'square');
+            }
+        }
+
+        const soundEffects = new SoundEffects();
+
+        // Confetti function
+        function createConfetti() {
+            const confettiContainer = document.createElement('div');
+            confettiContainer.className = 'confetti';
+            document.body.appendChild(confettiContainer);
+
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'];
+            
+            for (let i = 0; i < 50; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.animationDelay = Math.random() * 0.5 + 's';
+                piece.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                confettiContainer.appendChild(piece);
+            }
+
+            setTimeout(() => {
+                document.body.removeChild(confettiContainer);
+            }, 3000);
+        }
+
+        // App State
+        let appState = {
+            items: ['Pizza', 'Burger', 'Sushi', 'Tacos', 'Pasta', 'Salad'],
+            newItem: '',
+            editingIndex: -1,
+            editingText: '',
+            isSpinning: false,
+            rotation: 0,
+            selectedItem: null
+        };
+
+        // App Functions
+        function addItem() {
+            if (appState.newItem.trim() && !appState.items.includes(appState.newItem.trim())) {
+                appState.items = [...appState.items, appState.newItem.trim()];
+                appState.newItem = '';
+                render();
+            }
+        }
+
+        function removeItem(index) {
+            appState.items = appState.items.filter((_, i) => i !== index);
+            render();
+        }
+
+        function startEditing(index) {
+            appState.editingIndex = index;
+            appState.editingText = appState.items[index];
+            render();
+        }
+
+        function saveEdit() {
+            if (appState.editingText.trim() && !appState.items.includes(appState.editingText.trim())) {
+                appState.items[appState.editingIndex] = appState.editingText.trim();
+            }
+            appState.editingIndex = -1;
+            appState.editingText = '';
+            render();
+        }
+
+        function cancelEdit() {
+            appState.editingIndex = -1;
+            appState.editingText = '';
+            render();
+        }
+
+        function spinWheel() {
+            if (appState.isSpinning || appState.items.length === 0) return;
+
+            soundEffects.playClickSound();
+
+            appState.isSpinning = true;
+            appState.selectedItem = null;
+
+            soundEffects.playSpinSound();
+
+            const spins = 5 + Math.random() * 5;
+            const finalAngle = Math.random() * 360;
+            const totalRotation = (appState.rotation % 360) + (spins * 360) + finalAngle;
+
+            appState.rotation = totalRotation;
+
+            const wheel = document.querySelector('.wheel');
+            if (wheel) {
+                wheel.style.transform = 'rotate(' + totalRotation + 'deg)';
+            }
+
+            // Calculate which item the pointer lands on
+            const segmentAngle = 360 / appState.items.length;
+            const finalRotationNormalized = (totalRotation % 360 + 360) % 360;
+            
+            // The pointer is at the top (270 degrees), so we need to adjust for that
+            const pointerAngle = 270;
+            const adjustedAngle = (pointerAngle - finalRotationNormalized + 360) % 360;
+            
+            // Find which segment the pointer is in
+            const selectedIndex = Math.floor(adjustedAngle / segmentAngle);
+            const selected = appState.items[selectedIndex];
+
+            setTimeout(() => {
+                appState.isSpinning = false;
+                appState.selectedItem = selected;
+                createConfetti();
+                soundEffects.playSuccessSound();
+                render();
+            }, 3000);
+
+            render();
+        }
+
+        // Render function
+        function render() {
+            const app = document.getElementById('spinner-wheel-app');
+            
+            const colors = [
+                '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', 
+                '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9',
+                '#F8C471', '#82E0AA', '#F1948A', '#85C1E9', '#D7BDE2'
+            ];
+
+            if (appState.items.length === 0) {
+                app.innerHTML = 
+                    '<div class="container">' +
+                        '<div class="header">' +
+                            '<h1>Spinner Wheel</h1>' +
+                            '<p>Customize your options and spin to make a random decision!</p>' +
+                        '</div>' +
+                        '<div class="main-content">' +
+                            '<div class="item-manager">' +
+                                '<div class="item-manager-header">' +
+                                    '<div class="item-manager-title">Customize Your List</div>' +
+                                '</div>' +
+                                '<div class="item-manager-content">' +
+                                    '<div class="add-item-row">' +
+                                        '<input type="text" class="add-item-input" placeholder="Add new item..." value="' + appState.newItem + '" onkeypress="if(event.key===\'Enter\') addItem()" oninput="appState.newItem = this.value" />' +
+                                        '<button class="add-btn" onclick="addItem()" ' + (!appState.newItem.trim() ? 'disabled' : '') + '>+</button>' +
+                                    '</div>' +
+                                    '<p class="empty-message">No items yet. Add some options to get started!</p>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                return;
+            }
+
+            const segmentAngle = 360 / appState.items.length;
+
+            // Create wheel segments
+            const segments = appState.items.map((item, index) => {
+                const startAngle = index * segmentAngle;
+                const endAngle = (index + 1) * segmentAngle;
+                const color = colors[index % colors.length];
+
+                const centerX = 150;
+                const centerY = 150;
+                const radius = 140;
+                const startAngleRad = (startAngle * Math.PI) / 180;
+                const endAngleRad = (endAngle * Math.PI) / 180;
+
+                const x1 = centerX + radius * Math.cos(startAngleRad);
+                const y1 = centerY + radius * Math.sin(startAngleRad);
+                const x2 = centerX + radius * Math.cos(endAngleRad);
+                const y2 = centerY + radius * Math.sin(endAngleRad);
+
+                const largeArcFlag = segmentAngle > 180 ? 1 : 0;
+
+                const pathData = 
+                    'M ' + centerX + ' ' + centerY + ' ' +
+                    'L ' + x1 + ' ' + y1 + ' ' +
+                    'A ' + radius + ' ' + radius + ' 0 ' + largeArcFlag + ' 1 ' + x2 + ' ' + y2 + ' ' +
+                    'Z';
+
+                const textAngle = startAngle + segmentAngle / 2;
+                const textAngleRad = (textAngle * Math.PI) / 180;
+                const textRadius = radius * 0.7;
+                const textX = centerX + textRadius * Math.cos(textAngleRad);
+                const textY = centerY + textRadius * Math.sin(textAngleRad);
+
+                return '<g>' +
+                    '<path d="' + pathData + '" fill="' + color + '" stroke="#fff" stroke-width="2"/>' +
+                    '<text x="' + textX + '" y="' + textY + '" text-anchor="middle" dominant-baseline="middle" ' +
+                    'fill="#fff" font-size="14" font-weight="bold" ' +
+                    'transform="rotate(' + textAngle + ', ' + textX + ', ' + textY + ')">' +
+                    item +
+                    '</text>' +
+                    '</g>';
+            }).join('');
+
+            app.innerHTML = 
+                '<div class="container">' +
+                    '<div class="header">' +
+                        '<h1>Spinner Wheel</h1>' +
+                        '<p>Customize your options and spin to make a random decision!</p>' +
+                    '</div>' +
+
+                    '<div class="main-content">' +
+                        '<div class="item-manager">' +
+                            '<div class="item-manager-header">' +
+                                '<div class="item-manager-title">Customize Your List</div>' +
+                            '</div>' +
+                            '<div class="item-manager-content">' +
+                                '<div class="add-item-row">' +
+                                    '<input type="text" class="add-item-input" placeholder="Add new item..." value="' + appState.newItem + '" onkeypress="if(event.key===\'Enter\') addItem()" oninput="appState.newItem = this.value" />' +
+                                    '<button class="add-btn" onclick="addItem()" ' + (!appState.newItem.trim() || appState.items.includes(appState.newItem.trim()) ? 'disabled' : '') + '>+</button>' +
+                                '</div>' +
+
+                                '<div class="items-list">' +
+                                    appState.items.map((item, index) => 
+                                        '<div class="item-row">' +
+                                            (appState.editingIndex === index ? 
+                                                '<input type="text" class="item-input" value="' + appState.editingText + '" onkeypress="if(event.key===\'Enter\') saveEdit()" oninput="appState.editingText = this.value" autofocus />' +
+                                                '<button class="item-btn" onclick="saveEdit()" ' + (!appState.editingText.trim() || appState.items.includes(appState.editingText.trim()) ? 'disabled' : '') + '>✓</button>' +
+                                                '<button class="item-btn" onclick="cancelEdit()">✕</button>'
+                                            : 
+                                                '<span class="item-text">' + item + '</span>' +
+                                                '<button class="item-btn" onclick="startEditing(' + index + ')">✎</button>' +
+                                                '<button class="item-btn delete" onclick="removeItem(' + index + ')">🗑</button>'
+                                            ) +
+                                        '</div>'
+                                    ).join('') +
+                                '</div>' +
+
+                                '<div class="item-count">' +
+                                    appState.items.length + ' item' + (appState.items.length !== 1 ? 's' : '') + ' in your wheel' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        '<div class="spinner-container">' +
+                            '<div class="wheel-wrapper">' +
+                                '<div class="wheel-container">' +
+                                    '<div class="wheel" style="transform: rotate(' + appState.rotation + 'deg)">' +
+                                        '<svg width="300" height="300">' +
+                                            segments +
+                                            '<circle cx="150" cy="150" r="20" fill="#333" stroke="#fff" stroke-width="3"/>' +
+                                        '</svg>' +
+                                    '</div>' +
+                                    '<div class="pointer"></div>' +
+                                '</div>' +
+
+                                '<button class="spin-btn" onclick="spinWheel()" ' + (appState.isSpinning ? 'disabled' : '') + '>' +
+                                    (appState.isSpinning ? 'Spinning...' : 'SPIN') +
+                                '</button>' +
+
+                                (appState.selectedItem && !appState.isSpinning ? 
+                                    '<div class="result-container">' +
+                                        '<div class="result-title">🎉 Result:</div>' +
+                                        '<div class="result-text">' + appState.selectedItem + '</div>' +
+                                    '</div>'
+                                : '') +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="footer">' +
+                        '<p>Built with HTML, CSS & JavaScript</p>' +
+                    '</div>' +
+                '</div>';
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
+
